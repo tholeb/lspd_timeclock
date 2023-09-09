@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Services</title>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+		<link rel="shortcut icon" href="https://static.wikia.nocookie.net/gtawiki/images/3/32/LSSD.png">
+	</head>
+	<body>
+		<div class="container">
+			<div class="row">
+				<h1 id="title">Heures de services</h1>
+				<select class="form-select" aria-label="Default select example" id="weeksDropdown">
+					<option selected>Open this select menu</option>
+				</select>
+				<h2>Vous avez travaillé un total de <span id="totalHours">0h</span>.</h2>
+			</div>
+			<div class="row">
+				<table class="table table-striped table-hover" id="datatable">
+					<thead>
+						<tr>
+						<th scope="col">#</th>
+						<th scope="col">Jour</th>
+						<th scope="col">Début</th>
+						<th scope="col">Fin</th>
+						<th scope="col">Durée</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+
+				<table class="table table-striped table-hover" id="salary">
+					<thead>
+						<tr>
+							<th scope="col">Grade</th>
+							<th scope="col">Salaire horaire</th>
+							<th scope="col">Salaire max</th>
+							<th scope="col">Salaire estimé</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Trainee</td>
+							<td>$2 000</td>
+							<td>$20 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Deputy I</td>
+							<td>$2 500</td>
+							<td>$25 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Deputy II</td>
+							<td>$3 000</td>
+							<td>$30 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Deputy III</td>
+							<td>$3 500</td>
+							<td>$35 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Senior Deputy</td>
+							<td>$4 000</td>
+							<td>$40 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Sergeant</td>
+							<td>$4 500</td>
+							<td>$45 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Lieutenant</td>
+							<td>$5 000</td>
+							<td>$50 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Captain</td>
+							<td>$5 500</td>
+							<td>$55 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Area Commander</td>
+							<td>$6 000</td>
+							<td>$60 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Assitant Sheriff</td>
+							<td>$6 500</td>
+							<td>$65 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Under Sheriff</td>
+							<td>$7 000</td>
+							<td>$70 000</td>
+							<td></td>
+						</tr>
+						<tr>
+							<td>Sheriff</td>
+							<td>$7 500</td>
+							<td>$75 000</td>
+							<td></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+		<script type="module">
+			moment.locale('fr');
+			const url = window.location.pathname.split('/');
+			const userid = url[url.length - 1];
+
+			function getServicesByWeekNumber(services) {
+				return services.reduce((acc, service) => {
+					const weekNumber = service.weekNumber;
+					if (!acc[weekNumber]) {
+						acc[weekNumber] = [];
+					}
+					acc[weekNumber].push(service);
+					return acc;
+				}, {});
+			}
+
+			function timeToFloat(time) {
+				const [hour, minutes] = moment.utc(time).format('HH:mm').split(':').map(Number);
+				const fractionOfHour = minutes / 60;
+				return hour + fractionOfHour;
+			}
+
+			function populateDropdown(availableWeeks) {
+				const dropdown = document.querySelector('select');
+				dropdown.innerHTML = '';
+				availableWeeks.forEach(week => {
+					const option = document.createElement('option');
+					option.value = week;
+					option.innerText = 'Semaine n°' + week;
+					dropdown.appendChild(option);
+				});
+			}
+
+			function generateSalary(totalHours) {
+				const salary = [
+					2000,
+					2500,
+					3000,
+					3500,
+					4000,
+					4500,
+					5000,
+					5500,
+					6000,
+					6500,
+					7000,
+					7500,
+				]
+
+				const lastCols = document.querySelectorAll('#salary > tbody > tr> td:last-child');
+
+				lastCols.forEach((col, index) => {
+					const salaryPerHour = salary[index];
+					const salaryEstimate = salaryPerHour * timeToFloat(totalHours);
+
+					col.innerText = '$' + salaryEstimate.toFixed(0);
+				});
+			}
+
+			function populateTable(weekNumber, servicesByWeekNumber) {
+				const table = document.querySelector('tbody');
+				table.innerHTML = '';
+				const services = servicesByWeekNumber[weekNumber];
+				services.forEach(service => {
+					const row = document.createElement('tr');
+					const dayOfTheWeek = moment(service.start).format('dddd');
+					const date = moment(service.start).format('DD/MM/YYYY');
+
+					const start = moment(service.start).format('HH[h]mm');
+					const end = moment(service.end).format('HH[h]mm');
+					const duration = moment.utc(moment.duration(moment(service.end).diff(moment(service.start))).asMilliseconds()).format('HH[h]mm');
+					row.innerHTML = `
+						<th scope="row">${service.id}</th>
+						<td>${dayOfTheWeek} ${date}</td>
+						<td>${start}</td>
+						<td>${end}</td>
+						<td>${duration}</td>
+					`;
+					table.appendChild(row);
+				});
+			}
+
+			function getTotalHoursFromWeek(weekNumber, servicesByWeekNumber) {
+				return servicesByWeekNumber[weekNumber].reduce((acc, service) => {
+					const start = moment(service.start);
+					const end = moment(service.end);
+
+					const duration = moment.duration(end.diff(start));
+
+					return acc + duration.asMilliseconds();
+				}, 0);
+			}
+
+			function showTotalHours(weekNumber, totalHours) {
+				const div = document.querySelector('#totalHours');
+				div.innerText = moment.utc(totalHours).format('HH[h]mm');
+			}
+			
+			$(document).ready(async function () {
+				const services = await fetch('/api/services/' + userid)
+					.then(response => response.json())
+					.catch((err) => console.error(err));
+
+				const availableWeeks = [...new Set(services.map(service => service.weekNumber))];
+
+				const servicesByWeekNumber = getServicesByWeekNumber(services);
+
+				const totalHours = getTotalHoursFromWeek(availableWeeks[0], servicesByWeekNumber);
+
+				// Populate on load
+				populateDropdown(availableWeeks);
+
+				populateTable(availableWeeks[0], servicesByWeekNumber);
+				showTotalHours(availableWeeks[0], totalHours);
+				generateSalary(totalHours);
+				
+				const select = document.querySelector('select');
+				select.onchange = function() {
+					const weekNumber = this.value;
+					
+					populateTable(weekNumber, servicesByWeekNumber);
+					showTotalHours(weekNumber, totalHours);
+					generateSalary(totalHours);
+				}
+			});
+		</script>
+	</body>
+</html>

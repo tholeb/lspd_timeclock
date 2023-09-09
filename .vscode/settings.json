@@ -1,0 +1,10 @@
+{
+	"sqltools.connections": [
+		{
+			"previewLimit": 50,
+			"driver": "SQLite",
+			"name": "timerbot",
+			"database": "${workspaceFolder:timer_discordbot}/db.sqlite3"
+		}
+	]
+}
