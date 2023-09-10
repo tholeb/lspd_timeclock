@@ -6,8 +6,8 @@ const event: Event = {
 	name: Events.ClientReady,
 	once: true,
 	async execute(client) {
-		client.logger.info(`${client.user.tag}, ready to serve ${client.users.cache.size} users in ${client.guilds.cache.size} servers.`);
-		client.user.setActivity('faire du café ☕', { type: ActivityType.Competing });
+		client.logger.info(`${client.user.tag}, ready`);
+		client.user.setActivity('Compter vos heures', { type: ActivityType.Competing });
 
 		const rest = new REST().setToken(process.env.TOKEN);
 

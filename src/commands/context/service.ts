@@ -1,4 +1,4 @@
-import { ApplicationCommandType, PermissionFlagsBits } from 'discord.js';
+import { ApplicationCommandType, PermissionFlagsBits, userMention } from 'discord.js';
 import { ContextMenuUserCommand } from '@/Client';
 import Config from '@/models/Config';
 import Shift from '@/models/Shifts';
@@ -64,6 +64,11 @@ export default {
 
 		const userRoles = interaction.guild?.members.cache.get(interaction.targetUser.id)?.roles.cache;
 
+		moment.locale('fr');
+		moment.updateLocale('fr', {
+			dow: 1,
+		});
+
 		if (role && !userRoles?.has(role?.id)) {
 			await Shift.create({
 				userId: interaction.targetUser.id,
@@ -72,7 +77,7 @@ export default {
 			});
 
 			await interaction.guild?.members.cache.get(interaction.targetUser.id)?.roles.add(role, 'Début de service');
-			await interaction.editReply({ content: 'Vous êtes maintenant en service' });
+			await interaction.editReply({ content: `${userMention(interaction.targetUser.id)} est maintenant en service` });
 
 			return;
 		}
@@ -86,7 +91,7 @@ export default {
 
 		if (!lastShift) {
 			await interaction.guild?.members.cache.get(interaction.targetUser.id)?.roles.remove(role, 'Fin de service');
-			await interaction.editReply({ content: 'Vous n\'êtes plus en service, mais je n\'ai pas trouvé votre dernier shift.' });
+			await interaction.editReply({ content: `${userMention(interaction.targetUser.id)} n'est plus en service, mais je n'ai pas trouvé votre dernier shift.` });
 
 			return;
 		}
@@ -95,8 +100,13 @@ export default {
 			end: moment().toISOString(),
 		});
 
+		const start = moment(lastShift.getDataValue('start'));
+		const end = moment(lastShift.getDataValue('end'));
+
+		const duration = moment.utc(moment.duration(end.diff(start)).asMilliseconds()).format('HH[h]mm');
+
 		await interaction.guild?.members.cache.get(interaction.targetUser.id)?.roles.remove(role, 'Fin de service');
-		await interaction.editReply({ content: 'Vous n\'êtes plus en service' });
+		await interaction.editReply({ content: `${userMention(interaction.targetUser.id)} n'est plus en service (durée de ${duration})` });
 
 	},
 } satisfies ContextMenuUserCommand;

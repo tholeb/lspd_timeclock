@@ -49,12 +49,17 @@ export default {
 
 		const day = getRandomInt(1, 14);
 
-		Shift.create({
-			userId: interaction.targetUser.id,
-			weekNumber: moment().week().toString(),
-			start: moment().add(day, 'day').toISOString(),
-			end: moment().add(day, 'day').add(getRandomInt(1, 6), 'hours').toISOString(),
-		});
+		if (process.env.NODE_ENV === 'dev') {
+			const newDate = moment().add(day, 'day');
+			console.log(newDate.toISOString(), newDate.week().toString());
+
+			Shift.create({
+				userId: interaction.targetUser.id,
+				weekNumber: newDate.week().toString(),
+				start: newDate.toISOString(),
+				end: newDate.add(getRandomInt(1, 6), 'hours').toISOString(),
+			});
+		}
 
 		const servicesByWeekNumber = AllServices.reduce((acc, service) => {
 			const weekNumber = service.getDataValue('weekNumber');
@@ -77,12 +82,17 @@ export default {
 				const end = moment(service.getDataValue('end'));
 
 				const startHour = start.format('HH[h]mm');
-				const endHour = end.format('HH[h]mm');
+				let endHour = end.format('HH[h]mm');
 
-				const duration = moment.utc(moment.duration(end.diff(start)).asMilliseconds()).format('HH[h]mm');
+				let duration = moment.utc(moment.duration(end.diff(start)).asMilliseconds()).format('HH[h]mm');
+
+				if (endHour.toString() === 'Invalid date') {
+					endHour = 'En cours';
+					duration = 'En cours';
+				}
 
 				return {
-					name: moment.weekdays()[moment(service.getDataValue('start')).day()],
+					name: `${moment.weekdays()[start.day()]} ${moment(start).format('DD/MM/YYYY')}`,
 					value: `${startHour} - ${endHour} (${duration})`,
 				};
 			});
@@ -92,20 +102,24 @@ export default {
 				const start = moment(service.getDataValue('start'));
 				const end = moment(service.getDataValue('end'));
 
+				if (end.toString() === 'Invalid date') return acc;
+
 				const duration = moment.duration(end.diff(start));
 
 				return acc + duration.asMilliseconds();
 			}, 0);
 
-			console.log(totalHours);
+			const year = moment(services[0].getDataValue('start')).year();
 
-			const embed = createEmbed(`Semaine n°${weekNumber}`, `Vous avez été en service pendant ${moment.utc(totalHours).format('HH[h]mm')} cette semaine`, 0xfff, { fields });
+			const firstDayOfTheWeek = moment().year(year).week(parseInt(weekNumber)).startOf('week');
+			const lastDayOfTheWeek = moment().year(year).week(parseInt(weekNumber)).endOf('week');
+
+			const embed = createEmbed(`Semaine n°${weekNumber} (${firstDayOfTheWeek.format('DD/MM/YYYY')} - ${lastDayOfTheWeek.format('DD/MM/YYYY')})`,
+				`Vous avez été en service pendant **${moment.utc(totalHours).format('HH[h]mm')}** cette semaine`, { fields });
 
 			return embed;
 
 		});
-
-		console.log(embeds);
 
 		embeds.sort((a, b) => {
 			const aWeekNumber = parseInt(a.title!.split(' ')[2]);
@@ -114,12 +128,10 @@ export default {
 			return aWeekNumber - bWeekNumber;
 		});
 
-		embeds.reverse();
-
-		const pager = new Pager(interaction, embeds);
+		const pager = new Pager(interaction, embeds, embeds.length - 1);
 		pager.run();
 
-		await interaction.editReply({ embeds: [embeds[0]], components: [pager.makeButton()] });
+		await interaction.editReply({ content: `Modifiez vos heures sur l'[application web](http://lssd.tholeb.fr:8555/services/${interaction.targetUser.id} "Lien vers vos heures de services")`, embeds: [embeds[embeds.length - 1]], components: [...pager.makeButton()] });
 
 		return;
 

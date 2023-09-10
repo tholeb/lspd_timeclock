@@ -5,10 +5,10 @@ export default class Pager<I extends CommandInteraction> {
 	private readonly pages: APIEmbed[];
 	private index: number;
 
-	constructor(interaction: I, pages: APIEmbed[]) {
+	constructor(interaction: I, pages: APIEmbed[], index = 0) {
 		this.interaction = interaction;
 		this.pages = pages;
-		this.index = 0;
+		this.index = index;
 	}
 
 	public run() {
@@ -19,11 +19,19 @@ export default class Pager<I extends CommandInteraction> {
 			switch (i.customId) {
 				case 'previous':
 					this.index--;
-					await this.interaction.editReply({ embeds: [this.pages[this.index]], components: [this.makeButton()] });
+					await this.interaction.editReply({ embeds: [this.pages[this.index]], components: [...this.makeButton()] });
 					break;
 				case 'next':
 					this.index++;
-					await this.interaction.editReply({ embeds: [this.pages[this.index]], components: [this.makeButton()] });
+					await this.interaction.editReply({ embeds: [this.pages[this.index]], components: [...this.makeButton()] });
+					break;
+				case 'first':
+					this.index = 0;
+					await this.interaction.editReply({ embeds: [this.pages[this.index]], components: [...this.makeButton()] });
+					break;
+				case 'last':
+					this.index = this.pages.length - 1;
+					await this.interaction.editReply({ embeds: [this.pages[this.index]], components: [...this.makeButton()] });
 					break;
 			}
 		});
@@ -33,8 +41,9 @@ export default class Pager<I extends CommandInteraction> {
 		});
 	}
 
-	public makeButton(): APIActionRowComponent<APIMessageActionRowComponent> {
+	public makeButton(): APIActionRowComponent<APIMessageActionRowComponent>[] {
 		const row = new ActionRowBuilder();
+		const row2 = new ActionRowBuilder();
 
 		const previous = new ButtonBuilder()
 			.setCustomId('previous')
@@ -54,9 +63,22 @@ export default class Pager<I extends CommandInteraction> {
 			.setStyle(ButtonStyle.Secondary)
 			.setDisabled(true);
 
-		row.addComponents(previous, next, pages);
+		const first = new ButtonBuilder()
+			.setCustomId('first')
+			.setLabel('Première page')
+			.setStyle(ButtonStyle.Secondary)
+			.setDisabled(this.index === 0);
 
-		return row.toJSON() as APIActionRowComponent<APIMessageActionRowComponent>;
+		const last = new ButtonBuilder()
+			.setCustomId('last')
+			.setLabel('Dernière page')
+			.setStyle(ButtonStyle.Secondary)
+			.setDisabled(this.index === this.pages.length - 1);
+
+		row.addComponents(previous, next, pages);
+		row2.addComponents(first, last);
+
+		return [row.toJSON() as APIActionRowComponent<APIMessageActionRowComponent>, row2.toJSON() as APIActionRowComponent<APIMessageActionRowComponent>];
 	}
 
 }
