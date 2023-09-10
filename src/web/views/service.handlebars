@@ -314,7 +314,7 @@
 			return;
 		}
 
-		const availableWeeks = [...new Set(services.map(service => service.weekNumber))];
+		const availableWeeks = [...new Set(services.map(service => service.weekNumber))].sort();
 
 		const servicesByWeekNumber = getServicesByWeekNumber(services);
 
@@ -325,7 +325,7 @@
 		if (servicesByWeekNumber[actualWeekNumber]) {
 			weekToDisplay = actualWeekNumber;
 		}
-	
+
 		const totalHours = getTotalHoursFromWeek(weekToDisplay, servicesByWeekNumber);
 
 		// Populate on load

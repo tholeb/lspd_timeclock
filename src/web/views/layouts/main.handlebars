@@ -145,7 +145,6 @@
 					return
 				}
 				
-				console.log(`${matricule} | ${identity}`, user.rpname)
 				if (`${matricule} | ${identity}` === user.rpname) {
 					console.log("same name")
 					$('#account-modal').modal('hide')
@@ -163,6 +162,7 @@
 					})
 				}).then((res) => res.json())
 					.then((data) => {
+						document.getElementById('no-rpname').style.display = "none"
 						$('#toast-body-success').text(`Votre matricule et nom RP ont été sauvegardés avec succès`);
 						toastBootstrapSuccess.show();
 						$('#account-modal').modal('hide')
