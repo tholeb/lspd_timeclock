@@ -1,0 +1,72 @@
+<div class="modal fade" id="account-modal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="accountLabel"
+	aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h1 class="modal-title fs-5" id="accountLabel">Mon Compte</h1>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form>
+				<div class="modal-body">
+					<div class="input-group mb-3">
+						<input type="number" class="form-control" placeholder="Matricule" aria-label="Matricule"
+							name="matricule" style="flex: 0 1 150px;" min="200" max="299">
+						<span class="input-group-text">|</span>
+						<input type="text" class="form-control" placeholder="Nom prénom" aria-label="Nom prénom"
+							name="identity">
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					<button type="submit" class="btn btn-primary" id="account-submit">Save changes</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script defer>
+	{ { !--modal mon compte-- } }
+	const myModal = document.getElementById('account-modal')
+	const myInput = document.getElementById('btn-modal')
+
+	myModal.addEventListener('shown.bs.modal', () => {
+		myInput.focus()
+	})
+
+	const submitButton = document.getElementById('account-submit')
+	const matriculeInput = document.querySelector('input[name="matricule"]')
+	const identityInput = document.querySelector('input[name="identity"]')
+
+	submitButton.addEventListener('click', async (event) => {
+		event.preventDefault()
+		const matricule = matriculeInput.value.trim()
+		const identity = identityInput.value.trim()
+
+		const toastBootstrapErr = bootstrap.Toast.getOrCreateInstance(document.getElementById('err-toast'))
+		const toastBootstrapSuccess = bootstrap.Toast.getOrCreateInstance(document.getElementById('success-toast'))
+
+
+		if (matricule.length < 2 || matricule.length > 3) {
+			alert("Le matricule doit faire 2 ou 3 caractères")
+			return
+		}
+
+		if (identity.length < 3) { alert("Le nom RP doit faire au moins 3 caractères") return } if (`${matricule} |
+		${identity}` === user.rpname) { console.log("same name") $('#account-modal').modal('hide') return } await
+			fetch(`/api/user/${user.id}`, {
+				method: "PUT", headers: { "Content-Type": "application/json" }, body:
+					JSON.stringify({ matricule, identity })
+			}).then((res) => res.json())
+				.then((data) => {
+					document.getElementById('no-rpname').style.display = "none"
+					$('#toast-body-success').text(`Votre matricule et nom RP ont été sauvegardés avec succès`);
+					toastBootstrapSuccess.show();
+					$('#account-modal').modal('hide')
+				}).catch((err) => {
+					console.error(err);
+					$('#toast-body-err').text(err.message);
+					toastBootstrapErr.show();
+				});
+	})
+</script>

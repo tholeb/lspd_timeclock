@@ -1,0 +1,16 @@
+<div style="padding-top: 5em;"></div>
+<nav class="navbar bg-body-tertiary">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="#">Connecté en temps que <b>
+				{{#if user.rpname}}
+					{{user.rpname}}
+				{{else}}
+					{{user.username}}
+				{{/if}}
+			</b>
+		</a>
+		<span class="navbar-text">
+			Version {{getGitCommit}}
+		</span>
+	</div>
+</nav>

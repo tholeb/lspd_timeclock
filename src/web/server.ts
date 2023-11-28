@@ -1,7 +1,6 @@
 import Client from '@/Client';
 import express from 'express';
 import passport from 'passport';
-import DiscordStrategy from 'passport-discord';
 import session from 'express-session';
 import { RawUserData } from 'discord.js/typings/rawDataTypes';
 import crypto from 'crypto';
@@ -9,36 +8,40 @@ import cookieParser from 'cookie-parser';
 import { engine } from 'express-handlebars';
 import path from 'node:path';
 import { getGitCommit } from '@/utils/GitCommit';
-import api from './api';
+import api from './routes/api';
+import strategy from './strategy';
+import auth from './routes/auth';
 import Users from '@/models/Users';
-
-const scopes = ['identify'];
+import moment from 'moment';
+import refresh from 'passport-oauth2-refresh';
+import Shifts from '@/models/Shifts';
 
 const app = express();
-const port = 3000;
 
 type user = RawUserData & {
 	rpname?: string | null | undefined;
 }
 
 function ensureAuthenticated(req: express.Request, res: express.Response, next: express.NextFunction) {
-	if (req.isAuthenticated()) {
-		return next();
+	// User is not authenticated, redirect to the Discord login page
+	if (!req.isAuthenticated()) {
+		return res.redirect('/auth/discord');
 	}
 
-	// User is not authenticated, redirect to the Discord login page
-	res.redirect('/auth/discord');
+	return next();
 }
 
 function main(client: Client) {
-	app.listen(port, () => {
-		client.logger.webserver(`Webapp listening on port http://localhost:${port}`);
+	app.listen(process.env.PORT || 3000, () => {
+		client.logger.webserver(`Webapp listening on port http://localhost:${process.env.PORT}`);
 	});
 
 	app.engine(
 		'handlebars',
 		engine({
 			defaultLayout: 'main',
+			layoutsDir: path.join(__dirname, 'views/layouts'),
+			partialsDir: path.join(__dirname, 'views/partials'),
 			helpers: {
 				json: function (context: unknown) {
 					return JSON.stringify(context);
@@ -49,15 +52,10 @@ function main(client: Client) {
 	app.set('view engine', 'handlebars');
 	app.set('views', path.join(__dirname, 'views'));
 
-	app.use('*', (req, res, next) => {
-		client.logger.webserver(`${req.method} request made to ${req.url} from ${req.ip}`);
-		next();
-	});
-
 	app.use(cookieParser());
 
 	app.use(session({
-		secret: crypto.randomUUID(),
+		secret: process.env.SESSION_SECRET || crypto.randomBytes(20).toString('hex'),
 		resave: false,
 		saveUninitialized: false,
 	}));
@@ -66,64 +64,24 @@ function main(client: Client) {
 
 	app.use(passport.session());
 
-	passport.use(new DiscordStrategy({
-		clientID: process.env.CLIENT_ID,
-		clientSecret: process.env.CLIENT_SECRET,
-		callbackURL: `http://localhost:${port}/auth/discord/callback`,
-		scope: scopes,
-	}, async function (accessToken, refreshToken, profile, done) {
-		console.log(`${profile.username} Logged in (${profile.id})`);
-		if (profile) {
-			const [user, created] = await Users.findOrCreate({
-				where: { id: profile.id },
-				defaults: {
-					id: profile.id,
-					username: profile.username,
-					avatar: profile.avatar,
-					email: profile.email,
-				},
-			});
-
-			console.log(user, created);
-			return done(null, profile);
-		}
-		else {
-			return done(null, false);
-		}
-	}));
+	passport.use(strategy);
+	refresh.use(strategy);
 
 	passport.serializeUser(function (user, done) {
 		done(null, user);
 	});
 
-	passport.deserializeUser(function (obj: Express.User, done) {
+	passport.deserializeUser((obj: RawUserData, done) => {
 		done(null, obj);
 	});
 
-
-	app.get('/auth/discord', passport.authenticate('discord'));
-	app.get('/auth/discord/callback',
-		passport.authenticate('discord', { failureRedirect: '/auth/discord' }),
-		async (req, res) => {
-			const user = req.user as RawUserData;
-
-			const userInDB = await Users.findOne({ where: { id: user.id } });
-
-			res.cookie('user_id', user.id, { maxAge: 900000 });
-
-			if (userInDB?.rpname) {
-				res.cookie('rpname', userInDB.rpname, { maxAge: 900000 });
-			}
-			else {
-				res.cookie('rpname', 'none', { maxAge: 900000 });
-			}
-
-			// Successful authentication, redirect to the profile page
-			res.redirect('/services/' + user.id);
-		},
-	);
+	app.use('*', (req, res, next) => {
+		client.logger.webserver(`${req.method} request made to ${req.url} from ${req.ip}`);
+		next();
+	});
 
 	app.use('/api', api);
+	app.use('/auth', auth);
 	app.get('/logout', function (req, res) {
 		req.session.destroy(() => {
 			Object.getOwnPropertyNames(req.cookies).forEach((name) => res.clearCookie(name));
@@ -132,11 +90,7 @@ function main(client: Client) {
 		});
 	});
 
-	app.get('/info', ensureAuthenticated, function (req, res) {
-		res.json(req.user);
-	});
-
-	app.get('/services/all', ensureAuthenticated, async (req, res) => {
+	app.get('/supervision', ensureAuthenticated, async (req, res) => {
 		const user = req.user as user;
 		const isAuthenticated = req.isAuthenticated();
 
@@ -147,19 +101,39 @@ function main(client: Client) {
 		return res.render('serviceAll', { user, isAuthenticated, getGitCommit });
 	});
 
-	app.get('/services/:id', ensureAuthenticated, async (req, res) => {
+	app.get('/services/:id?', ensureAuthenticated, async (req, res) => {
 		const user = req.user as user;
 		const isAuthenticated = req.isAuthenticated();
+		const selectedWeek = parseInt(req.query.week as string) || moment().week();
 
 		const rpname = await Users.findOne({ where: { id: user.id }, attributes: ['rpname'] });
 
 		user.rpname = rpname?.getDataValue('rpname');
 
-		return res.render('service', { user, isAuthenticated, getGitCommit });
+		const userId = req.params.id || user.id;
+
+		/* const services = {
+			48: [
+				{ userid: '123456789', name: 'Test Service', status: 'online' },
+				{ userid: '13161515', name: 'Test Servicddqse', status: 'onliqsdne' },
+			],
+			49: [
+				{ userid: 'aaa', name: 'Test Service', status: 'online' },
+				{ userid: 'sdq', name: 'Test Servicddqse', status: 'onliqsdne' },
+			],
+		}; */
+
+		const services = await Shifts.findAll({ where: { userId, weekNumber: selectedWeek } });
+		const weeks = await Shifts.findAll({ where: { userId }, attributes: ['weekNumber'] });
+
+		return res.render('service', { user, isAuthenticated, getGitCommit, services: services[selectedWeek as keyof typeof services], weeks });
 	});
 
 	app.use('/', ensureAuthenticated, (req, res) => {
-		res.send('Web app started !');
+		const user = req.user as user;
+		const isAuthenticated = req.isAuthenticated();
+
+		return res.render('index', { user, isAuthenticated, getGitCommit });
 	});
 
 }

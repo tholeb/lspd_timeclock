@@ -1,0 +1,99 @@
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="#">
+			<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Seal_of_the_Los_Angeles_Police_Department.png/1200px-Seal_of_the_Los_Angeles_Police_Department.png"
+				alt="Bootstrap" width="30">
+			<span class="navbar-brand mb-0 h1" id="title">Heures de services</span>
+		</a>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+			aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+			<div class="navbar-nav">
+				<a class="nav-link active" aria-current="page" href="/">Accueil</a>
+				<a class="nav-link" href="/services">Services</a>
+				<a class="nav-link" href="/supervision">Supervision</a>
+			</div>
+		</div>
+		<div>
+			<button type="button" class="btn btn-primary" id="btn-service">
+			</button>
+			<button type="button" class="btn btn-primary" id="btn-modal" data-bs-toggle="modal"
+				data-bs-target="#account-modal">
+				Mon compte
+			</button>
+			<a type="button" class="btn btn-danger" href="/logout">
+				<i class="fa-solid fa-right-from-bracket"></i>
+			</a>
+			<a type="button" class="btn btn-danger" href="/logout">
+				<i class="fa-solid fa-cog"></i>
+			</a>
+		</div>
+	</div>
+</nav>
+<div style="padding-bottom: 2em;"></div>
+
+{{> moncompte}}
+
+<script defer>
+	{{!-- Bouton --}}
+	function getCookie(cname) {
+		let name = cname + "=";
+		let decodedCookie = decodeURIComponent(document.cookie);
+		let ca = decodedCookie.split(';');
+		for (let i = 0; i < ca.length; i++) {
+			let c = ca[i];
+			while (c.charAt(0) == ' ') {
+				c = c.substring(1);
+			}
+			if (c.indexOf(name) == 0) {
+				return c.substring(name.length, c.length);
+			}
+		}
+		return "";
+	}
+
+	function setCookie(cname, cvalue, exdays) {
+		const d = new Date();
+		d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+		let expires = "expires=" + d.toUTCString();
+		document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+	}
+
+	const button = document.getElementById('btn-service');
+
+	const serviceStatus = getCookie('service');
+
+	if (!serviceStatus) {
+		setCookie('service', 'false', 1)
+	}
+
+	if (serviceStatus === 'true') {
+		button.classList.add('btn-danger')
+		button.classList.remove('btn-success')
+		button.innerHTML = "<i class='fa-solid fa-stop'></i>"
+	} else {
+		button.classList.add('btn-success')
+		button.classList.remove('btn-danger')
+		button.innerHTML = "<i class='fa-solid fa-play'></i>"
+	}
+
+	button.onclick = function (event) {
+		event.preventDefault();
+
+		if (getCookie('service') === 'true') {
+			setCookie('service', 'false', 1);
+			button.classList.add('btn-success');
+			button.classList.remove('btn-danger');
+			button.innerHTML = "<i class='fa-solid fa-play'></i>";
+			return
+		} else {
+			setCookie('service', 'true', 1);
+			button.classList.add('btn-danger');
+			button.classList.remove('btn-success');
+			button.innerHTML = "<i class='fa-solid fa-stop'></i>";
+			return
+		}
+	}
+</script>
