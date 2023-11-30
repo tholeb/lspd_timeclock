@@ -11,14 +11,16 @@ export default defineNuxtConfig({
 		isEnabled: true,
 		baseURL: process.env.AUTH_ORIGIN,
 		provider: {
-			type: 'authjs'
+			type: 'authjs',
 		},
 		globalAppMiddleware: {
-			isEnabled: true
-		}
+			isEnabled: true,
+		},
 	},
 	elementPlus: {
-		theme: ['dark']
+		themes: ['dark'],
 	},
-	eslint: {}
-})
+	eslint: {
+		fix: true,
+	},
+});
