@@ -27,3 +27,6 @@ logs
 .flaskenv*
 !.env.project
 !.env.vault
+
+# Database
+*.sqlite3

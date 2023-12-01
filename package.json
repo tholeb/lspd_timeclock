@@ -26,6 +26,7 @@
   "dependencies": {
     "@formkit/auto-animate": "^0.8.1",
     "next-auth": "4.21.1",
-    "sequelize": "^6.35.1"
+    "sequelize": "^6.35.1",
+    "sqlite3": "^5.1.6"
   }
 }
