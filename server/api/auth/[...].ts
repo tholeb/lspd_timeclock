@@ -1,6 +1,5 @@
-import CredentialsProvider from 'next-auth/providers/credentials'
-import DiscordProvider from 'next-auth/providers/discord'
-import { NuxtAuthHandler } from '#auth'
+import DiscordProvider from 'next-auth/providers/discord';
+import { NuxtAuthHandler } from '#auth';
 
 export default NuxtAuthHandler({
 	// TODO: SET A STRONG SECRET, SEE https://sidebase.io/nuxt-auth/configuration/nuxt-auth-handler#secret
@@ -14,4 +13,4 @@ export default NuxtAuthHandler({
 			authorization: { params: { scope: 'identify guilds' } },
 		}),
 	],
-})
+});
