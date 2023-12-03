@@ -27,7 +27,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			// eslint-disable-next-line no-inline-comments
 			const model = await import(/* @vite-ignore */modelPath).then(m => m.default);
 
-			models[model(sequelize, DataTypes).name] = model(sequelize, DataTypes);
+			const modelObj = model(sequelize);
+
+			models[modelObj.name] = modelObj;
 		});
 
 	Object.keys(models).forEach(modelName => {
