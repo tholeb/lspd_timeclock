@@ -26,6 +26,9 @@ export default defineNuxtConfig({
 			storage: process.env.DB_STORAGE || './db.sqlite3',
 		},
 	},
+	watch: [
+		'server/*/*.ts',
+	],
 	elementPlus: {
 		themes: ['dark'],
 	},
