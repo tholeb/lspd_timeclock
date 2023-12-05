@@ -1,3 +1,5 @@
+import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 	devtools: { enabled: true },
@@ -5,10 +7,15 @@ export default defineNuxtConfig({
 		'~/plugins/sequelize.server.ts',
 	],
 	modules: [
+		(_options, nuxt) => {
+			nuxt.hooks.hook('vite:extendConfig', (config) => {
+				// @ts-expect-error
+				config.plugins.push(vuetify({ autoImport: true }));
+			});
+		},
 		'@sidebase/nuxt-auth',
-		'@element-plus/nuxt',
 		'@nuxtjs/eslint-module',
-		'@formkit/auto-animate/nuxt',
+		'@invictus.codes/nuxt-vuetify',
 	],
 	auth: {
 		isEnabled: true,
@@ -26,13 +33,34 @@ export default defineNuxtConfig({
 			storage: process.env.DB_STORAGE || './db.sqlite3',
 		},
 	},
-	watch: [
-		'server/*/*.ts',
-	],
-	elementPlus: {
-		themes: ['dark'],
-	},
 	eslint: {
 		fix: true,
+	},
+	build: {
+		transpile: ['vuetify'],
+	},
+	vite: {
+		vue: {
+			template: {
+				transformAssetUrls,
+			},
+		},
+	},
+	vuetify: {
+		/* vuetify options */
+		vuetifyOptions: {
+			// @TODO: list all vuetify options
+		},
+
+		moduleOptions: {
+			/* nuxt-vuetify module options */
+			treeshaking: true,
+			useIconCDN: true,
+
+			/* vite-plugin-vuetify options */
+			styles: true,
+			autoImport: true,
+			useVuetifyLabs: false,
+		},
 	},
 });
