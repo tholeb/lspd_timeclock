@@ -1,5 +1,9 @@
 import DiscordProvider from 'next-auth/providers/discord';
 import { NuxtAuthHandler } from '#auth';
+import SequelizeAdapter from '@auth/sequelize-adapter';
+import { Adapter } from 'next-auth/adapters';
+import database from '../../database';
+
 
 export default NuxtAuthHandler({
 	// TODO: SET A STRONG SECRET, SEE https://sidebase.io/nuxt-auth/configuration/nuxt-auth-handler#secret
@@ -13,4 +17,8 @@ export default NuxtAuthHandler({
 			authorization: { params: { scope: 'identify guilds' } },
 		}),
 	],
+	adapter: SequelizeAdapter(database) as Adapter,
+	pages: {
+		signIn: '/login',
+	},
 });

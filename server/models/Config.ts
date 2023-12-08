@@ -1,7 +1,7 @@
 import { DataTypes, InferAttributes, InferCreationAttributes, Model, Sequelize } from 'sequelize';
 
 
-export default (sequelize: Sequelize, types: typeof DataTypes = DataTypes) => {
+export default (sequelize: Sequelize) => {
 	class Config extends Model<InferAttributes<Config>, InferCreationAttributes<Config>> {
 		declare guildId: string;
 		declare key: string;
@@ -11,22 +11,22 @@ export default (sequelize: Sequelize, types: typeof DataTypes = DataTypes) => {
 
 	Config.init({
 		guildId: {
-			type: types.STRING,
+			type: DataTypes.STRING,
 			allowNull: false,
 			primaryKey: true,
 		},
 		key: {
-			type: types.STRING,
+			type: DataTypes.STRING,
 			allowNull: false,
 			primaryKey: true,
 		},
 		value: {
-			type: types.STRING,
+			type: DataTypes.STRING,
 			allowNull: false,
 			unique: false,
 		},
 		modifierId: {
-			type: types.STRING,
+			type: DataTypes.STRING,
 			allowNull: false,
 			unique: false,
 		},

@@ -1,24 +1,13 @@
-import { Sequelize, DataTypes, type Dialect } from 'sequelize';
+import { Sequelize, type Dialect } from 'sequelize';
 import fs from 'node:fs';
 import path from 'node:path';
-import Config from '~/server/models/Config';
+
+import database from '../server/database';
+
 
 export default defineNuxtPlugin(async (nuxtApp) => {
-	const config = useRuntimeConfig();
-
 	const models: { [key: string]: any } = {};
 	const modelsDir = path.join(__dirname, '..', 'server', 'models');
-
-	/* const sequelize = new Sequelize(config.dbName, config.dbUser, config.dbPass, {
-		host: config.dbHost,
-		port: parseInt(config.dbPort),
-		dialect: 'mysql',
-	}); */
-
-	const sequelize = new Sequelize({
-		dialect: config.database.dialect as Dialect,
-		storage: config.database.storage,
-	});
 
 	fs.readdirSync(modelsDir)
 		.filter(file => file.endsWith('.ts'))
@@ -27,7 +16,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			// eslint-disable-next-line no-inline-comments
 			const model = await import(/* @vite-ignore */modelPath).then(m => m.default);
 
-			const modelObj = model(sequelize);
+			const modelObj = model(database);
 
 			models[modelObj.name] = modelObj;
 		});
@@ -39,8 +28,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	});
 
 	try {
-		await sequelize.authenticate();
-		await sequelize.sync({ force: true });
+		await database.authenticate();
+		await database.sync({ force: true });
 
 		// this log was executed every time I navigate to a new route
 		// or refreshing the browser.
@@ -52,7 +41,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
 	return {
 		provide: {
-			db: sequelize,
+			db: database,
 		},
 	};
 });

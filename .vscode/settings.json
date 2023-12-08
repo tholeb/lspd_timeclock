@@ -21,5 +21,13 @@
 		"className",
 		"ngClass",
 		"ui"
+	],
+	"sqltools.connections": [
+		{
+			"previewLimit": 50,
+			"driver": "SQLite",
+			"database": "${workspaceFolder:lspd_timeclock}/db.sqlite3",
+			"name": "Timeclock"
+		}
 	]
 }
